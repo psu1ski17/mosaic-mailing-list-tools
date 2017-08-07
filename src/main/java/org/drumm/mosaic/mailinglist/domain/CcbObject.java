@@ -10,14 +10,14 @@ public class CcbObject implements Serializable{
 	 */
 	private static final long serialVersionUID = 1L;
 	// "Last Name","First Name",Campus,"Mailing Street","Mailing City","Mailing State","Mailing Zip","Family Primary Contact"
-	private String lastName;
-	private String firstName;
-	private String Campus;
-	private String mailingStreet;
-	private String mailingCity;
-	private String mailingState;
-	private String mailingZip;
-	private String familyPrimaryContact;
+	protected String lastName;
+	protected String firstName;
+	protected String Campus;
+	protected String mailingStreet;
+	protected String mailingCity;
+	protected String mailingState;
+	protected String mailingZip;
+	protected String familyPrimaryContact;
 
 	@JsonProperty("Last Name")
 	public String getLastName() {
