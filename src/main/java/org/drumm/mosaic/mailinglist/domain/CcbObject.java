@@ -4,7 +4,7 @@ import java.io.Serializable;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-public class CcbObject implements Serializable{
+public class CcbObject implements Serializable {
 	/**
 	 * 
 	 */
@@ -106,5 +106,10 @@ public class CcbObject implements Serializable{
 				+ ", mailingCity=" + mailingCity + ", mailingState="
 				+ mailingState + ", mailingZip=" + mailingZip
 				+ ", familyPrimaryContact=" + familyPrimaryContact + "]";
+	}
+
+	public String toAddressString() {
+		return this.getMailingStreet() + " " + this.getMailingCity() + ", "
+				+ this.getMailingState() + " " + this.getMailingZip();
 	}
 }
