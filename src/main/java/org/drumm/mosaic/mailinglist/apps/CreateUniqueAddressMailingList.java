@@ -2,6 +2,8 @@ package org.drumm.mosaic.mailinglist.apps;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -10,24 +12,31 @@ import java.util.Map.Entry;
 import org.drumm.mosaic.mailinglist.Addresses;
 import org.drumm.mosaic.mailinglist.domain.CcbObject;
 import org.drumm.mosaic.mailinglist.domain.GoogleDirectionsDto;
-import org.drumm.mosaic.mailinglist.services.CacheOnlyGoogleDirectionsService;
+import org.drumm.mosaic.mailinglist.services.CachedGoogleDirectionsService;
+import org.drumm.mosaic.mailinglist.services.GoogleDirectionsService;
 import org.drumm.mosaic.util.CsvUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.databind.MappingIterator;
 
 public class CreateUniqueAddressMailingList {
+	private static final Logger logger = LoggerFactory.getLogger(CreateUniqueAddressMailingList.class);
 
 	public static String DEFAULT_OUTPUT_FILE = "data/results/UniqueMailingList.csv";
 
 	public static void main(String[] args) throws IOException {
 
-		String cacheFile = "data/google/Copy (7) of google-directions.cache";
-		CacheOnlyGoogleDirectionsService service = new CacheOnlyGoogleDirectionsService(
-				cacheFile);
+		String cacheFile = "data/google/google-directions.cache";
+		String apiKey = GoogleDirectionsService
+				.getKeyFromFile("data/source/Google-API-key.txt");
+		CachedGoogleDirectionsService service = new CachedGoogleDirectionsService(
+				apiKey, cacheFile);
 
 		MappingIterator<CcbObject> itr = CsvUtil.getCsvReaderIterator(
 				CsvUtil.DEFAULT_SOURCE_LIST, CcbObject.class);
-		Map<String, List<CcbObject>> map = new HashMap<String, List<CcbObject>>();
+		Map<String, List<UniqueMailingListDto>> map = new HashMap<String, List<UniqueMailingListDto>>();
+		int count = 0;
 		while (itr.hasNext()) {
 			CcbObject obj = itr.next();
 			String addr = obj.toAddressString();
@@ -56,25 +65,37 @@ public class CreateUniqueAddressMailingList {
 			if (!aFirstWord.equals(nFirstWord)) {
 				normalizedAddress = addr;
 			}
+
+			UniqueMailingListDto v = new UniqueMailingListDto(obj);
+			v.setNormalizedAddress(normalizedAddress);
+			v.setLookupStatus(dir.getStatus());
+
 			if (map.containsKey(normalizedAddress)) {
-				map.get(normalizedAddress).add(obj);
+				map.get(normalizedAddress).add(v);
 			} else {
-				ArrayList<CcbObject> list = new ArrayList<CcbObject>();
-				list.add(obj);
+				ArrayList<UniqueMailingListDto> list = new ArrayList<UniqueMailingListDto>();
+				list.add(v);
 				map.put(normalizedAddress, list);
 			}
-
+			count++;
+			if (count%500 == 0){
+				logger.info("processed "+count+" names.");
+			}
 		}
 
 		List<UniqueMailingListDto> writeList = new ArrayList<UniqueMailingListDto>();
-		for (Entry<String, List<CcbObject>> entry : map.entrySet()) {
-			String normalizedAddress = entry.getKey();
-			List<CcbObject> objList = entry.getValue();
-			CcbObject baseObj = objList.isEmpty() ? null : objList.get(0);
+		for (Entry<String, List<UniqueMailingListDto>> entry : map.entrySet()) {
+			List<UniqueMailingListDto> objList = entry.getValue();
+			ArrayList<String> allNames = new ArrayList<String>();
+			for (UniqueMailingListDto item : objList) {
+				allNames.add(item.getFirstName() + " " + item.getLastName());
+			}
 			int numAtAddress = objList.size();
-			UniqueMailingListDto v = new UniqueMailingListDto(baseObj);
-			v.setNormalizedAddress(normalizedAddress);
-			v.setNumAtAddress(numAtAddress);
+			UniqueMailingListDto v = objList.get(0);
+			if (v != null) {
+				v.setNumAtAddress(numAtAddress);
+				v.setAllNames(allNames);
+			}
 			writeList.add(v);
 		}
 		CsvUtil.writeListAsCsv(DEFAULT_OUTPUT_FILE, UniqueMailingListDto.class,
@@ -88,6 +109,8 @@ public class CreateUniqueAddressMailingList {
 		private static final long serialVersionUID = 1L;
 		private int numAtAddress;
 		private String normalizedAddress;
+		private String allNames;
+		private String lookupStatus;
 
 		public UniqueMailingListDto(CcbObject entry) {
 			this.Campus = entry.getCampus();
@@ -114,6 +137,30 @@ public class CreateUniqueAddressMailingList {
 
 		public void setNormalizedAddress(String normalizedAddress) {
 			this.normalizedAddress = normalizedAddress;
+		}
+
+		public String getAllNames() {
+			return allNames;
+		}
+
+		public void setAllNames(String... names) {
+			this.allNames = Arrays.toString(names);
+		}
+
+		public void setAllNames(Collection<String> names) {
+			this.setAllNames(names.toArray(new String[0]));
+		}
+
+		public void setAllNames(String allNames) {
+			this.allNames = allNames;
+		}
+
+		public String getLookupStatus() {
+			return lookupStatus;
+		}
+
+		public void setLookupStatus(String lookupStatus) {
+			this.lookupStatus = lookupStatus;
 		}
 	}
 }

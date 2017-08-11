@@ -13,12 +13,14 @@ import java.net.URL;
 import java.net.URLEncoder;
 
 import org.drumm.mosaic.mailinglist.domain.GoogleDirectionsDto;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class GoogleDirectionsService {
-
+	private static final Logger logger = LoggerFactory.getLogger(GoogleDirectionsService.class);
 	private static final Object OVER_QUOTA_STATUS = null;
 	private String apiKey;
 	private ObjectMapper jsonMapper;
@@ -37,7 +39,7 @@ public class GoogleDirectionsService {
 					"https://maps.googleapis.com/maps/api/directions/json?origin="
 							+ origin + "&destination=" + dest + "&key="
 							+ apiKey);
-			System.out.println(uri.toString());
+			logger.trace(uri.toString());
 			return uri.toURL();
 		} catch (URISyntaxException e) {
 			throw new RuntimeException("error creating url", e);
@@ -83,7 +85,7 @@ public class GoogleDirectionsService {
 				.getKeyFromFile("./data/source/Google-API-key.txt");
 		GoogleDirectionsService service = new GoogleDirectionsService(key);
 		JsonNode dir = service.getDirectionsToJson("PA", "CA");
-		System.out.println(dir);
+		logger.debug(dir.toString());
 	}
 
 	public static String getKeyFromFile(String filePath) throws IOException {

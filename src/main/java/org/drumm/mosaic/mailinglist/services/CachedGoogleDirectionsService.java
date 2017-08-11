@@ -10,27 +10,39 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.drumm.mosaic.mailinglist.domain.GoogleDirectionsDto;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
 public class CachedGoogleDirectionsService {
+	private static final Logger logger = LoggerFactory
+			.getLogger(CachedGoogleDirectionsService.class);
 	private static final String DEFAULT_FILE = "data/google/google-directions.cache";
 	private GoogleDirectionsService service;
 	private Map<String, GoogleDirectionsDto> cache;
+	private String cacheFile;
 
 	public CachedGoogleDirectionsService(String apiKey) {
-		this(new GoogleDirectionsService(apiKey));
+		this(new GoogleDirectionsService(apiKey), DEFAULT_FILE);
 	}
 
-	public CachedGoogleDirectionsService(GoogleDirectionsService service) {
+	public CachedGoogleDirectionsService(String apiKey, String cacheFile) {
+		this(new GoogleDirectionsService(apiKey), cacheFile);
+	}
+
+	public CachedGoogleDirectionsService(GoogleDirectionsService service,
+			String cacheFile) {
 		this.service = service;
+		this.cacheFile = cacheFile;
 		try {
-			readCache(DEFAULT_FILE);
-			for ( GoogleDirectionsDto v: cache.values()){
-				if (v.getError_message()==null || v.getError_message().equals("")){
-					
-				}else{
-					System.out.println("bad data");
+			readCache(cacheFile);
+			for (GoogleDirectionsDto v : cache.values()) {
+				if (v.getError_message() == null
+						|| v.getError_message().equals("")) {
+
+				} else {
+					logger.error("bad data");
 				}
 			}
 		} catch (IOException e) {
@@ -47,16 +59,20 @@ public class CachedGoogleDirectionsService {
 			throws IOException {
 		String key = getCacheKey(origin, dest);
 		if (cache.containsKey(key)) {
-			//System.out.println("cache hit");
+			logger.trace("cache hit for origin='" + origin + "', dest='"
+					+ dest + "'");
 			return cache.get(key);
 		} else {
 			GoogleDirectionsDto dir = this.service.getDirections(origin, dest);
-			System.out.println("cache miss");
-			if (dir.getStatus().equals("OK") || dir.getStatus().equals("ZERO_RESULTS")) {
+			logger.trace("cache miss for origin='" + origin + "', dest='"
+					+ dest + "'");
+			if (dir.getStatus().equals("OK")
+					|| dir.getStatus().equals("ZERO_RESULTS")) {
 				cache.put(key, dir);
-				writeCache(DEFAULT_FILE);
-			}else{
-				System.out.println("status not ok");
+				writeCache(cacheFile);
+			} else {
+				logger.trace("status not ok");
+				logger.trace(dir.getStatus());
 			}
 			return dir;
 		}
@@ -93,7 +109,7 @@ public class CachedGoogleDirectionsService {
 			return;
 		} else {
 			newFile = new File(filename + "2");
-			if (newFile.exists())	{
+			if (newFile.exists()) {
 				newFile.delete();
 			}
 			file.renameTo(newFile);
