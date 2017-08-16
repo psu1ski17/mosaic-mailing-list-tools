@@ -58,7 +58,7 @@ public class AnnotateList {
 						&& dirsArundel.getStatus().equals("OK")
 						&& dirsElkridge.getStatus().equals("OK")) {
 					count++;
-					ao.setNormalizedAddress(getStartAddress(dirsArundel));
+					ao.setGoogleAddress(getStartAddress(dirsArundel));
 					ao.setDistanceArundelMeters(getDistance(dirsArundel));
 					ao.setDistanceArundelMillis(getDriveTime(dirsArundel));
 					ao.setDistanceElkridgeMeters(getDistance(dirsElkridge));

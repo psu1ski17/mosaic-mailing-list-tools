@@ -7,7 +7,10 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
 
 import org.drumm.mosaic.mailinglist.domain.GoogleDirectionsDto;
 import org.slf4j.Logger;
@@ -22,6 +25,7 @@ public class CachedGoogleDirectionsService {
 	private GoogleDirectionsService service;
 	private Map<String, GoogleDirectionsDto> cache;
 	private String cacheFile;
+	private TreeSet<String> badAddressList;
 
 	public CachedGoogleDirectionsService(String apiKey) {
 		this(new GoogleDirectionsService(apiKey), DEFAULT_FILE);
@@ -35,6 +39,7 @@ public class CachedGoogleDirectionsService {
 			String cacheFile) {
 		this.service = service;
 		this.cacheFile = cacheFile;
+		this.badAddressList = new TreeSet<String>();
 		try {
 			readCache(cacheFile);
 			for (GoogleDirectionsDto v : cache.values()) {
@@ -59,23 +64,29 @@ public class CachedGoogleDirectionsService {
 			throws IOException {
 		String key = getCacheKey(origin, dest);
 		if (cache.containsKey(key)) {
-			logger.trace("cache hit for origin='" + origin + "', dest='"
-					+ dest + "'");
+			logger.trace("cache hit for origin='" + origin + "', dest='" + dest
+					+ "'");
 			return cache.get(key);
 		} else {
 			GoogleDirectionsDto dir = this.service.getDirections(origin, dest);
 			logger.trace("cache miss for origin='" + origin + "', dest='"
 					+ dest + "'");
 			if (dir.getStatus().equals("OK")
+					|| dir.getStatus().equals("ZERO_RESULTS")
 					|| dir.getStatus().equals("ZERO_RESULTS")) {
 				cache.put(key, dir);
 				writeCache(cacheFile);
 			} else {
 				logger.trace("status not ok");
 				logger.trace(dir.getStatus());
+				badAddressList.add(origin);
 			}
 			return dir;
 		}
+	}
+
+	public Set<String> getBadAddresses() {
+		return badAddressList;
 	}
 
 	private String getCacheKey(String origin, String dest) {

@@ -12,7 +12,7 @@ public class AnnotatedObject extends CcbObject {
 	protected int distanceArundelMeters;
 	protected long distanceElkridgeMillis;
 	protected long distanceArundelMillis;
-	protected String normalizedAddress;
+	protected String googleAddress;
 
 	public AnnotatedObject(CcbObject entry) {
 		this.Campus = entry.getCampus();
@@ -77,14 +77,14 @@ public class AnnotatedObject extends CcbObject {
 		this.distanceArundelMillis = distanceArundelMillis;
 	}
 
-	@JsonProperty("Normalize Address")
-	public String getNormalizedAddress() {
-		return normalizedAddress;
+	@JsonProperty("Google Address")
+	public String getGoogleAddress() {
+		return googleAddress;
 	}
 
-	@JsonProperty("Normalize Address")
-	public void setNormalizedAddress(String normalizedAddress) {
-		this.normalizedAddress = normalizedAddress;
+	@JsonProperty("Google Address")
+	public void setGoogleAddress(String GoogleAddress) {
+		this.googleAddress = googleAddress;
 	}
 
 }
