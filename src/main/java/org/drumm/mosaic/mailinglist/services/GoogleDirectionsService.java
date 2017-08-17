@@ -20,7 +20,8 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class GoogleDirectionsService {
-	private static final Logger logger = LoggerFactory.getLogger(GoogleDirectionsService.class);
+	private static final Logger logger = LoggerFactory
+			.getLogger(GoogleDirectionsService.class);
 	private static final Object OVER_QUOTA_STATUS = null;
 	private String apiKey;
 	private ObjectMapper jsonMapper;
@@ -57,14 +58,18 @@ public class GoogleDirectionsService {
 		InputStream stream = url.openStream();
 		return jsonMapper.readTree(stream);
 	}
-	
+
 	public GoogleDirectionsDto getDirections(String origin, String dest)
 			throws IOException {
 		URL url = generateUrl(origin, dest);
 		InputStream stream = url.openStream();
-		GoogleDirectionsDto val = jsonMapper.readValue(stream, GoogleDirectionsDto.class);
-		if (val.getStatus().equals(OVER_QUOTA_STATUS)){
+		GoogleDirectionsDto val = jsonMapper.readValue(stream,
+				GoogleDirectionsDto.class);
+		if (val.getStatus().equals(OVER_QUOTA_STATUS)) {
 			return val;
+		}
+		if (val.getStatus().equals("NOT_FOUND")) {
+			logger.debug("not found at " + url);
 		}
 		return val;
 	}

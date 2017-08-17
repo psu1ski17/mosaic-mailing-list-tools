@@ -1,5 +1,6 @@
 package org.drumm.mosaic.mailinglist.services;
 
+import java.io.Closeable;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -7,7 +8,6 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
@@ -18,7 +18,7 @@ import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
-public class CachedGoogleDirectionsService {
+public class CachedGoogleDirectionsService implements Closeable {
 	private static final Logger logger = LoggerFactory
 			.getLogger(CachedGoogleDirectionsService.class);
 	private static final String DEFAULT_FILE = "data/google/google-directions.cache";
@@ -26,6 +26,8 @@ public class CachedGoogleDirectionsService {
 	private Map<String, GoogleDirectionsDto> cache;
 	private String cacheFile;
 	private TreeSet<String> badAddressList;
+	private long addedToCacheCount = 0;
+	private long addedToCacheThreshold = 100;
 
 	public CachedGoogleDirectionsService(String apiKey) {
 		this(new GoogleDirectionsService(apiKey), DEFAULT_FILE);
@@ -75,7 +77,11 @@ public class CachedGoogleDirectionsService {
 					|| dir.getStatus().equals("ZERO_RESULTS")
 					|| dir.getStatus().equals("ZERO_RESULTS")) {
 				cache.put(key, dir);
-				writeCache(cacheFile);
+				addedToCacheCount++;
+				if (addedToCacheCount >= addedToCacheThreshold) {
+					addedToCacheCount = 0;
+					writeCache(cacheFile);
+				}
 			} else {
 				logger.trace("status not ok");
 				logger.trace(dir.getStatus());
@@ -103,6 +109,7 @@ public class CachedGoogleDirectionsService {
 				filename))) {
 
 			cache = (Map<String, GoogleDirectionsDto>) ois.readObject();
+			logger.info("loaded cache with " + cache.size() + " entries.");
 			ois.close();
 		} catch (Exception ex) {
 			ex.printStackTrace();
@@ -128,6 +135,8 @@ public class CachedGoogleDirectionsService {
 		try (ObjectOutputStream oos = new ObjectOutputStream(
 				new FileOutputStream(filename))) {
 			oos.writeObject(cache);
+			logger.info("Wrote cache to file with " + cache.size()
+					+ " entries.");
 			oos.close();
 		} catch (Exception ex) {
 			ex.printStackTrace();
@@ -136,5 +145,10 @@ public class CachedGoogleDirectionsService {
 				newFile.delete();
 			}
 		}
+	}
+
+	@Override
+	public void close() throws IOException {
+		writeCache(cacheFile);
 	}
 }

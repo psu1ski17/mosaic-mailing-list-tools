@@ -91,7 +91,7 @@ public class CreateUniqueAddressMailingList {
 				logger.info("processed " + count + " names.");
 			}
 		}
-
+		service.close();
 		writeFamilyMailingList(map);
 		writeUniqueAddresses(map);
 
@@ -153,8 +153,8 @@ public class CreateUniqueAddressMailingList {
 					lastNameMap.put(u.getLastName(), u);
 				} else {
 					u.setNumAtAddress(u.getNumAtAddress() + 1);
-					u.setAllNames(u.getAllNames() + ", " + u.getFirstName()
-							+ " " + u.getLastName());
+					u.setAllNames(u.getAllNames() + ", " + item.getFirstName()
+							+ " " + item.getLastName());
 				}
 			}
 			for (Entry<String, UniqueMailingListDto> e : lastNameMap.entrySet()) {
