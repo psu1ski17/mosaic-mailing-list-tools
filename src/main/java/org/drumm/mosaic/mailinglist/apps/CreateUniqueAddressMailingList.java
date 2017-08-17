@@ -96,10 +96,11 @@ public class CreateUniqueAddressMailingList {
 		writeUniqueAddresses(map);
 
 		Set<String> badAddr = service.getBadAddresses();
-		logger.info("Bad Addresses:");
+		logger.info("Bad Addresses ("+badAddr.size()+"):");
 		for (String addr : badAddr) {
 			logger.info("  " + addr);
 		}
+		logger.info(""+badAddr.size()+" bad addresses");
 	}
 
 	private static void writeUniqueAddresses(
