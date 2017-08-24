@@ -23,6 +23,7 @@ public class AnnotatedObject extends CcbObject {
 		this.mailingState = entry.getMailingState();
 		this.mailingStreet = entry.getMailingStreet();
 		this.mailingZip = entry.getMailingZip();
+		this.familyId = entry.getFamilyId();
 	}
 
 	@JsonProperty("Shortest Distance")

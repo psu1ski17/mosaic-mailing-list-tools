@@ -18,6 +18,7 @@ public class CcbObject implements Serializable {
 	protected String mailingState;
 	protected String mailingZip;
 	protected String familyPrimaryContact;
+	protected String familyId;
 
 	@JsonProperty("Last Name")
 	public String getLastName() {
@@ -99,13 +100,24 @@ public class CcbObject implements Serializable {
 		this.familyPrimaryContact = familyPrivaryContact;
 	}
 
+	@JsonProperty("Family ID")
+	public String getFamilyId() {
+		return familyId;
+	}
+
+	@JsonProperty("Family ID")
+	public void setFamilyId(String familyId) {
+		this.familyId = familyId;
+	}
+	
 	@Override
 	public String toString() {
-		return "CcbFormat [lastName=" + lastName + ", firstName=" + firstName
+		return "CcbObject [lastName=" + lastName + ", firstName=" + firstName
 				+ ", Campus=" + Campus + ", mailingStreet=" + mailingStreet
 				+ ", mailingCity=" + mailingCity + ", mailingState="
 				+ mailingState + ", mailingZip=" + mailingZip
-				+ ", familyPrimaryContact=" + familyPrimaryContact + "]";
+				+ ", familyPrimaryContact=" + familyPrimaryContact
+				+ ", familyId=" + familyId + "]";
 	}
 
 	public String toAddressString() {

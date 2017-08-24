@@ -20,6 +20,7 @@ import org.drumm.mosaic.mailinglist.domain.GoogleDirectionsDto;
 import org.drumm.mosaic.mailinglist.services.CachedGoogleDirectionsService;
 import org.drumm.mosaic.mailinglist.services.GoogleDirectionsService;
 import org.drumm.mosaic.util.CsvUtil;
+import org.drumm.mosaic.util.TransactionsUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -34,6 +35,8 @@ public class CreateUniqueAddressMailingList {
 	public static final String UNIQUE_ADDRESS_OUTPUT_FILE = "data/results/UniqueMailingList.csv";
 
 	private static final String MAILING_LIST_OUTPUT_FILE = "data/results/OutboundMailingList.csv";
+
+	private static final String MAILING_LIST_NO_MISSIONS_ONLY_OUTPUT_FILE = "data/results/NoMissionOnlyMailingList.csv";
 
 	public static void main(String[] args) throws IOException {
 		CachedGoogleDirectionsService service = getService();
@@ -92,15 +95,16 @@ public class CreateUniqueAddressMailingList {
 			}
 		}
 		service.close();
+		writeFamilyMailingListWithoutMissionsOnlyDonators(map);
 		writeFamilyMailingList(map);
 		writeUniqueAddresses(map);
 
 		Set<String> badAddr = service.getBadAddresses();
-		logger.info("Bad Addresses ("+badAddr.size()+"):");
+		logger.info("Bad Addresses (" + badAddr.size() + "):");
 		for (String addr : badAddr) {
 			logger.info("  " + addr);
 		}
-		logger.info(""+badAddr.size()+" bad addresses");
+		logger.info("" + badAddr.size() + " bad addresses");
 	}
 
 	private static void writeUniqueAddresses(
@@ -166,6 +170,41 @@ public class CreateUniqueAddressMailingList {
 				UniqueMailingListDto.class, writeList);
 	}
 
+	private static void writeFamilyMailingListWithoutMissionsOnlyDonators(
+			Map<String, List<UniqueMailingListDto>> map) throws IOException {
+		List<UniqueMailingListDto> writeList = new ArrayList<UniqueMailingListDto>();
+		Collection<String> missionsOnlyFamilyIds = TransactionsUtils
+				.getFamilyIdsWithOnlyMissionsTripGivingButNoGeneral(TransactionsUtils.SOURCE_DIRECTORY);
+		for (Entry<String, List<UniqueMailingListDto>> entry : map.entrySet()) {
+			List<UniqueMailingListDto> objList = entry.getValue();
+			ArrayList<String> allNames = new ArrayList<String>();
+			for (UniqueMailingListDto item : objList) {
+				allNames.add(item.getFirstName() + " " + item.getLastName());
+			}
+			HashMap<String, UniqueMailingListDto> lastNameMap = new HashMap<String, UniqueMailingListDto>();
+			for (UniqueMailingListDto item : objList) {
+				UniqueMailingListDto u = lastNameMap.get(item.getLastName());
+				if (u == null) {
+					u = item;
+					u.setNumAtAddress(1);
+					u.setAllNames(u.getFirstName() + " " + u.getLastName());
+					lastNameMap.put(u.getLastName(), u);
+				} else {
+					u.setNumAtAddress(u.getNumAtAddress() + 1);
+					u.setAllNames(u.getAllNames() + ", " + item.getFirstName()
+							+ " " + item.getLastName());
+				}
+			}
+			for (Entry<String, UniqueMailingListDto> e : lastNameMap.entrySet()) {
+				if (!missionsOnlyFamilyIds.contains(e.getValue().getFamilyId()) || e.getValue().getMailingState().equals("MD")) {
+					writeList.add(e.getValue());
+				}
+			}
+		}
+		CsvUtil.writeListAsCsv(MAILING_LIST_NO_MISSIONS_ONLY_OUTPUT_FILE,
+				UniqueMailingListDto.class, writeList);
+	}
+
 	private static CachedGoogleDirectionsService getService()
 			throws IOException {
 		String cacheFile = "data/google/google-directions.cache";
@@ -191,7 +230,7 @@ public class CreateUniqueAddressMailingList {
 		} else {
 			// ao.setGoogleAddress(getStartAddress(dirsArundel));
 			if (dirsElkridge.getStatus().equals("ZERO_RESULTS")) {
-				//Driving is impossible
+				// Driving is impossible
 				ao.setDistanceArundelMeters(7000000);
 				ao.setDistanceArundelMillis(300000000);
 				ao.setDistanceElkridgeMeters(7000000);
@@ -274,6 +313,7 @@ public class CreateUniqueAddressMailingList {
 			this.distanceElkridgeMillis = entry.getDistanceElkridgeMillis();
 			this.distanceArundelMillis = entry.getDistanceArundelMillis();
 			this.googleAddress = entry.getGoogleAddress();
+			this.familyId = entry.getFamilyId();
 		}
 
 		public int getNumAtAddress() {

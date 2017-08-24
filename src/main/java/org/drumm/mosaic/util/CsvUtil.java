@@ -17,12 +17,17 @@ public class CsvUtil {
 
 	public static <K> MappingIterator<K> getCsvReaderIterator(
 			String sourceFile, Class<K> klass) throws IOException {
+		File csvFile = new File(sourceFile);
+		return getCsvReaderIterator(csvFile, klass);
+	}
+	
+	public static <K> MappingIterator<K> getCsvReaderIterator(
+			File csvFile, Class<K> klass) throws IOException {
 		CsvMapper mapper = new CsvMapper();
 		mapper.enable(CsvParser.Feature.WRAP_AS_ARRAY);
 		CsvSchema readSchema = CsvSchema.emptySchema().withHeader()
 				.withColumnSeparator(',');
 
-		File csvFile = new File(sourceFile);
 		// ObjectReader it = mapper.reader(CcbObject.class);
 		MappingIterator<K> it = mapper.readerWithSchemaFor(klass)
 				.with(readSchema).readValues(csvFile);
