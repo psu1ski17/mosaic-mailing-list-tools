@@ -75,7 +75,7 @@ public class CachedGoogleDirectionsService implements Closeable {
 					+ dest + "'");
 			if (dir.getStatus().equals("OK")
 					|| dir.getStatus().equals("ZERO_RESULTS")
-					|| dir.getStatus().equals("ZERO_RESULTS")) {
+					|| dir.getStatus().equals("NOT_FOUND")) {
 				cache.put(key, dir);
 				addedToCacheCount++;
 				if (addedToCacheCount >= addedToCacheThreshold) {

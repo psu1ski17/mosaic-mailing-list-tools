@@ -178,27 +178,45 @@ public class CreateUniqueAddressMailingList {
 		for (Entry<String, List<UniqueMailingListDto>> entry : map.entrySet()) {
 			List<UniqueMailingListDto> objList = entry.getValue();
 			ArrayList<String> allNames = new ArrayList<String>();
+			
 			for (UniqueMailingListDto item : objList) {
 				allNames.add(item.getFirstName() + " " + item.getLastName());
 			}
 			HashMap<String, UniqueMailingListDto> lastNameMap = new HashMap<String, UniqueMailingListDto>();
 			for (UniqueMailingListDto item : objList) {
 				UniqueMailingListDto u = lastNameMap.get(item.getLastName());
+				boolean mo = missionsOnlyFamilyIds.contains(item
+						.getFamilyId());
+				boolean mtoanm = mo
+						&& !item.getMailingState().equals("MD");
 				if (u == null) {
 					u = item;
 					u.setNumAtAddress(1);
 					u.setAllNames(u.getFirstName() + " " + u.getLastName());
+					u.setMissionTripGivingOnly(mo);
+					u.setMissionTripGivingOnlyAndNotMd(mtoanm);
 					lastNameMap.put(u.getLastName(), u);
 				} else {
 					u.setNumAtAddress(u.getNumAtAddress() + 1);
 					u.setAllNames(u.getAllNames() + ", " + item.getFirstName()
 							+ " " + item.getLastName());
+					u.setMissionTripGivingOnly(mo && u.isMissionTripGivingOnly());
+					u.setMissionTripGivingOnlyAndNotMd(mtoanm && u.isMissionTripGivingOnlyAndNotMd());
 				}
 			}
 			for (Entry<String, UniqueMailingListDto> e : lastNameMap.entrySet()) {
-				if (!missionsOnlyFamilyIds.contains(e.getValue().getFamilyId()) || e.getValue().getMailingState().equals("MD")) {
-					writeList.add(e.getValue());
-				}
+				//boolean mo = missionsOnlyFamilyIds.contains(e.getValue()
+				//		.getFamilyId());
+				///boolean missionTripOnlyAndNotMaryland = mo
+				//		&& !e.getValue().getMailingState().equals("MD");
+				UniqueMailingListDto v = e.getValue();
+				//v.setMissionTripGivingOnly(mo);
+				//v.setMissionTripGivingOnlyAndNotMd(missionTripOnlyAndNotMaryland);
+				// if
+				// (!missionsOnlyFamilyIds.contains(e.getValue().getFamilyId())
+				// || e.getValue().getMailingState().equals("MD")) {
+				writeList.add(v);
+				// }
 			}
 		}
 		CsvUtil.writeListAsCsv(MAILING_LIST_NO_MISSIONS_ONLY_OUTPUT_FILE,
@@ -297,6 +315,8 @@ public class CreateUniqueAddressMailingList {
 		private String normalizedAddress;
 		private String allNames;
 		private String lookupStatus;
+		private boolean missionTripGivingOnly;
+		private boolean missionTripGivingOnlyAndNotMd;
 
 		public UniqueMailingListDto(AnnotatedObject entry) {
 			super(entry);
@@ -354,6 +374,23 @@ public class CreateUniqueAddressMailingList {
 
 		public void setLookupStatus(String lookupStatus) {
 			this.lookupStatus = lookupStatus;
+		}
+
+		public boolean isMissionTripGivingOnly() {
+			return missionTripGivingOnly;
+		}
+
+		public void setMissionTripGivingOnly(boolean missionTripGivingOnly) {
+			this.missionTripGivingOnly = missionTripGivingOnly;
+		}
+
+		public boolean isMissionTripGivingOnlyAndNotMd() {
+			return missionTripGivingOnlyAndNotMd;
+		}
+
+		public void setMissionTripGivingOnlyAndNotMd(
+				boolean missionTripGivingOnlyAndNotMd) {
+			this.missionTripGivingOnlyAndNotMd = missionTripGivingOnlyAndNotMd;
 		}
 	}
 }
